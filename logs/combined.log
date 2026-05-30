@@ -2671,3 +2671,28 @@
 2026-05-31 06:21:08 [[34mdebug[39m]: MQTT [esp32/sensors]: {"temperature":0,"humidity":0,"gas_level":38,"rain":true,"ultrasonic":0,"door_open":false,"timestamp":1569894}
 2026-05-31 06:21:11 [[34mdebug[39m]: MQTT [esp32/sensors]: {"temperature":0,"humidity":0,"gas_level":19,"rain":true,"ultrasonic":0,"door_open":false,"timestamp":1572894}
 2026-05-31 06:21:14 [[34mdebug[39m]: MQTT [esp32/sensors]: {"temperature":0,"humidity":0,"gas_level":33,"rain":true,"ultrasonic":0,"door_open":false,"timestamp":1575894}
+2026-05-31 06:21:17 [[34mdebug[39m]: MQTT [esp32/sensors]: {"temperature":0,"humidity":0,"gas_level":14,"rain":true,"ultrasonic":0,"door_open":false,"timestamp":1578894}
+2026-05-31 06:21:20 [[34mdebug[39m]: MQTT [esp32/sensors]: {"temperature":0,"humidity":0,"gas_level":21,"rain":true,"ultrasonic":0,"door_open":false,"timestamp":1581894}
+2026-05-31 06:21:23 [[34mdebug[39m]: MQTT [esp32/sensors]: {"temperature":0,"humidity":0,"gas_level":38,"rain":true,"ultrasonic":0,"door_open":false,"timestamp":1584894}
+2026-05-31 06:21:26 [[34mdebug[39m]: MQTT [esp32/sensors]: {"temperature":0,"humidity":0,"gas_level":18,"rain":true,"ultrasonic":0,"door_open":false,"timestamp":1587894}
+2026-05-31 06:21:29 [[34mdebug[39m]: MQTT [esp32/sensors]: {"temperature":0,"humidity":0,"gas_level":45,"rain":true,"ultrasonic":0,"door_open":false,"timestamp":1590894}
+2026-05-31 06:21:32 [[34mdebug[39m]: MQTT [esp32/sensors]: {"temperature":0,"humidity":0,"gas_level":14,"rain":true,"ultrasonic":0,"door_open":false,"timestamp":1593894}
+2026-05-31 06:21:35 [[34mdebug[39m]: MQTT [esp32/sensors]: {"temperature":0,"humidity":0,"gas_level":54,"rain":true,"ultrasonic":0,"door_open":false,"timestamp":1596894}
+2026-05-31 06:21:38 [[34mdebug[39m]: MQTT [esp32/sensors]: {"temperature":0,"humidity":0,"gas_level":9,"rain":true,"ultrasonic":0,"door_open":false,"timestamp":1599894}
+2026-05-31 06:21:41 [[34mdebug[39m]: MQTT [esp32/sensors]: {"temperature":0,"humidity":0,"gas_level":57,"rain":true,"ultrasonic":0,"door_open":false,"timestamp":1602894}
+2026-05-31 06:21:44 [[34mdebug[39m]: MQTT [esp32/sensors]: {"temperature":0,"humidity":0,"gas_level":10,"rain":true,"ultrasonic":0,"door_open":false,"timestamp":1605894}
+2026-05-31 06:21:47 [[34mdebug[39m]: MQTT [esp32/sensors]: {"temperature":0,"humidity":0,"gas_level":22,"rain":true,"ultrasonic":0,"door_open":false,"timestamp":1608894}
+2026-05-31 06:21:50 [[34mdebug[39m]: MQTT [esp32/sensors]: {"temperature":0,"humidity":0,"gas_level":13,"rain":true,"ultrasonic":0,"door_open":false,"timestamp":1611894}
+2026-05-31 06:21:53 [[34mdebug[39m]: MQTT [esp32/sensors]: {"temperature":0,"humidity":0,"gas_level":18,"rain":true,"ultrasonic":0,"door_open":false,"timestamp":1614894}
+2026-05-31 06:21:56 [[34mdebug[39m]: MQTT [esp32/sensors]: {"temperature":0,"humidity":0,"gas_level":59,"rain":true,"ultrasonic":0,"door_open":false,"timestamp":1617894}
+2026-05-31 06:21:59 [[34mdebug[39m]: MQTT [esp32/sensors]: {"temperature":0,"humidity":0,"gas_level":14,"rain":true,"ultrasonic":0,"door_open":false,"timestamp":1620894}
+2026-05-31 06:21:59 [[33mwarn[39m]: Alert [warning]: 📡 Motion Detected
+2026-05-31 06:21:59 [[33mwarn[39m]: Alert [info]: 🌧️ Rain Detected
+2026-05-31 06:21:59 [[33mwarn[39m]: Alert [warning]: 📡 Motion Detected
+2026-05-31 06:21:59 [[33mwarn[39m]: Alert [info]: 🌧️ Rain Detected
+2026-05-31 06:22:02 [[34mdebug[39m]: MQTT [esp32/sensors]: {"temperature":0,"humidity":0,"gas_level":24,"rain":true,"ultrasonic":0,"door_open":false,"timestamp":1623894}
+2026-05-31 06:22:05 [[34mdebug[39m]: MQTT [esp32/sensors]: {"temperature":0,"humidity":0,"gas_level":60,"rain":true,"ultrasonic":0,"door_open":false,"timestamp":1626894}
+2026-05-31 06:22:08 [[34mdebug[39m]: MQTT [esp32/sensors]: {"temperature":0,"humidity":0,"gas_level":10,"rain":true,"ultrasonic":0,"door_open":false,"timestamp":1629894}
+2026-05-31 06:22:11 [[34mdebug[39m]: MQTT [esp32/sensors]: {"temperature":0,"humidity":0,"gas_level":18,"rain":true,"ultrasonic":0,"door_open":false,"timestamp":1632894}
+2026-05-31 06:22:14 [[34mdebug[39m]: MQTT [esp32/sensors]: {"temperature":0,"humidity":0,"gas_level":24,"rain":true,"ultrasonic":0,"door_open":false,"timestamp":1635894}
+2026-05-31 06:22:17 [[34mdebug[39m]: MQTT [esp32/sensors]: {"temperature":0,"humidity":0,"gas_level":64,"rain":true,"ultrasonic":0,"door_open":false,"timestamp":1638894}
