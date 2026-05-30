@@ -4,7 +4,7 @@
   "description": "ESP32 Smart Home IoT Backend — MQTT + REST API + WebSocket",
   "main": "src/index.js",
   "scripts": {
-    "dev": "nodemon src/index.js",
+    "postinstall": "prisma generate",`n    "dev": "nodemon src/index.js",
     "start": "node src/index.js",
     "db:migrate": "npx prisma migrate dev",
     "db:generate": "npx prisma generate",
