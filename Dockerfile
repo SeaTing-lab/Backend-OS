@@ -12,7 +12,6 @@ RUN npm ci --omit=dev --ignore-scripts
 COPY . .
 
 RUN DATABASE_URL="postgresql://user:password@localhost:5432/app" \
-    DIRECT_URL="postgresql://user:password@localhost:5432/app" \
     npx prisma generate
 
 EXPOSE 3000
