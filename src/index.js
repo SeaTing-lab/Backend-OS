@@ -22,7 +22,7 @@ const systemRoutes  = require('./routes/system');
 const app = express();
 
 app.use(helmet());
-app.use(cors({ origin: process.env.CORS_ORIGIN || '*' })); // Set CORS_ORIGIN in production
+app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
 app.use(express.json());
 
 // Rate limit: 200 req/min per IP
@@ -64,11 +64,13 @@ mqttService.inject(wsService, alertService);
 
 // ── Start ─────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  logger.info(`🚀 Server running on http://localhost:${PORT}`);
-  logger.info(`   REST API  → http://localhost:${PORT}/api`);
-  logger.info(`   WebSocket → ws://localhost:${PORT}/ws`);
-  logger.info(`   Health    → http://localhost:${PORT}/health`);
+const HOST = '0.0.0.0'; // ✅ FIXED: bind to all interfaces so Docker exposes to LAN
+
+server.listen(PORT, HOST, () => {
+  logger.info(`🚀 Server running on http://${HOST}:${PORT}`);
+  logger.info(`   REST API  → http://${HOST}:${PORT}/api`);
+  logger.info(`   WebSocket → ws://${HOST}:${PORT}/ws`);
+  logger.info(`   Health    → http://${HOST}:${PORT}/health`);
 });
 
 // Connect MQTT

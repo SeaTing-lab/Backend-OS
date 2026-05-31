@@ -12,7 +12,7 @@ class ApiService {
   String baseUrl;
   String? _token;
 
-  ApiService({this.baseUrl = 'http://192.168.1.62:3000'});
+  ApiService({this.baseUrl = 'https://smart-home-backend-nqrg.onrender.com'});
 
   void setToken(String token) => _token = token;
 
