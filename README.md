@@ -52,6 +52,37 @@ Default admin credentials (from seed):
 
 ---
 
+## Hosting on Render
+
+This backend is ready for Render Blueprint deployment with `render.yaml`.
+
+1. Push this `api` folder to GitHub.
+2. In Render, create a new Blueprint from that GitHub repository.
+3. Render will create:
+   - `smart-home-backend` Docker web service
+   - `/app/uploads` persistent disk for uploaded camera photos
+4. During setup, enter these secret environment variables:
+   - `DATABASE_URL` from your Supabase Session pooler connection string
+   - `HIVEMQ_HOST`
+   - `HIVEMQ_USERNAME`
+   - `HIVEMQ_PASSWORD`
+5. Render generates `JWT_SECRET` automatically.
+6. After deploy, open `https://YOUR-RENDER-URL/health`.
+7. In the Flutter app Settings, set Backend URL to `https://YOUR-RENDER-URL`.
+
+Power readings, energy prices, sensor tables, and device state are stored in Supabase PostgreSQL. Uploaded photos are stored on the Render persistent disk. Render persistent disks require a paid web service; if you change `plan: starter` to `plan: free`, uploaded photos can be lost on restart or redeploy.
+
+Manual deploy commands:
+
+```bash
+npm install
+npm run db:deploy
+npm run db:seed
+npm start
+```
+
+---
+
 ## API Reference
 
 ### Auth
@@ -156,6 +187,36 @@ Device IDs: `relay_1`, `relay_2`, `relay_3`, `relay_4`, `buzzer`, `servo`, `came
   "updatedAt": "2025-04-12T10:30:00Z"
 }
 ```
+
+---
+
+### Photo Capture
+
+| Method | Endpoint | Body | Description |
+|---|---|---|---|
+| GET | `/api/photos` | - | List uploaded camera photos |
+| GET | `/api/photos/:id` | - | Get one photo metadata record |
+| POST | `/api/photos/upload` | `{imageBase64, mimeType, timestamp, distanceCm, thresholdCm, source, cameraSource}` | Upload a camera photo |
+| DELETE | `/api/photos/:id` | - | Delete a backend photo |
+
+Uploaded image files are served from `/uploads/photos/...`.
+
+---
+
+### Power Storage
+
+| Method | Endpoint | Body/Query | Description |
+|---|---|---|---|
+| GET | `/api/power/history` | `range=1d|1w|1m|1y, device_id` | Plain-list reading history for legacy chart widgets |
+| GET | `/api/power/readings` | `limit, from, to, device_id` | List saved power readings |
+| POST | `/api/power/readings` | one reading or `{readings:[...]}` | Save voltage, current, power, loss, kWh |
+| DELETE | `/api/power/readings/old` | `days` | Delete old power readings |
+| GET | `/api/power/prices` | - | List energy price rules |
+| PUT | `/api/power/prices` | `{price_history:[{effective_date, unit_price}]}` | Save price rules |
+| GET | `/api/power/equipment` | `limit, from, to` | Group power data by equipment/device |
+| GET | `/api/power/summary` | `period=day|month|year` | Energy, cost, peak, and loss summary |
+
+The Flutter app uses these endpoints without login so power history can sync between phones after the normal app login flow was removed.
 
 ---
 

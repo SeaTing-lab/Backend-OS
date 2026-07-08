@@ -38,6 +38,35 @@ model SensorReading {
   @@index([createdAt])
 }
 
+model PowerReading {
+  id              String   @id @default(cuid())
+  identityKey     String   @unique
+  deviceId        String   @default("power_point_1")
+  voltage         Float
+  current         Float
+  powerFactor     Float    @default(1)
+  cableResistance Float    @default(0.05)
+  power           Float
+  powerLoss       Float
+  energyKwh       Float    @default(0)
+  rawPayload      String?
+  timestamp       DateTime
+  createdAt       DateTime @default(now())
+
+  @@index([timestamp])
+  @@index([deviceId, timestamp])
+}
+
+model EnergyPriceRule {
+  id            Int      @id @default(autoincrement())
+  effectiveDate DateTime @unique
+  unitPrice     Float
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([effectiveDate])
+}
+
 // ── Device state ──────────────────────────────────────────────────────────
 model Device {
   id          String   @id  // "relay_1", "relay_2", "buzzer", etc.

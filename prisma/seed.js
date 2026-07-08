@@ -18,7 +18,16 @@ async function main() {
   ];
 
   for (const d of devices) {
-    await prisma.device.upsert({ where: { id: d.id }, update: d, create: d });
+    await prisma.device.upsert({
+      where: { id: d.id },
+      update: {
+        name: d.name,
+        type: d.type,
+        icon: d.icon,
+        channel: d.channel,
+      },
+      create: d,
+    });
   }
 
   // System state

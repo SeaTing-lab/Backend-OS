@@ -1,6 +1,7 @@
 // src/index.js
 require('dotenv').config();
 const http = require('http');
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -17,13 +18,18 @@ const sensorRoutes  = require('./routes/sensors');
 const deviceRoutes  = require('./routes/devices');
 const alertRoutes   = require('./routes/alerts');
 const systemRoutes  = require('./routes/system');
+const photoRoutes   = require('./routes/photos');
+const powerRoutes   = require('./routes/power');
 
 // ── Express app ───────────────────────────────────────────────────────────
 const app = express();
 
+app.set('trust proxy', 1);
 app.use(helmet());
 app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
-app.use(express.json());
+app.use(express.json({ limit: process.env.JSON_BODY_LIMIT || '12mb' }));
+
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // Rate limit: 200 req/min per IP
 app.use(rateLimit({ windowMs: 60_000, max: 200, standardHeaders: true }));
@@ -34,6 +40,8 @@ app.use('/api/sensors', sensorRoutes);
 app.use('/api/devices', deviceRoutes);
 app.use('/api/alerts',  alertRoutes);
 app.use('/api/system',  systemRoutes);
+app.use('/api/photos',  photoRoutes);
+app.use('/api/power',   powerRoutes);
 
 // Health check (no auth)
 app.get('/health', (req, res) => {
