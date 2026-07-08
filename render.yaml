@@ -1,0 +1,58 @@
+services:
+  - type: web
+    name: smart-home-backend
+    runtime: docker
+    plan: starter
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerCommand: npm start
+    preDeployCommand: npm run db:deploy && npm run db:seed
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    disk:
+      name: smart-home-uploads
+      mountPath: /app/uploads
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: smart-home-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: HIVEMQ_HOST
+        sync: false
+      - key: HIVEMQ_PORT
+        value: 8883
+      - key: HIVEMQ_USERNAME
+        sync: false
+      - key: HIVEMQ_PASSWORD
+        sync: false
+      - key: MQTT_CLIENT_ID
+        value: smart_home_backend
+      - key: DEFAULT_TEMP_MAX
+        value: 35
+      - key: DEFAULT_GAS_MAX
+        value: 300
+      - key: DEFAULT_ULTRASONIC_MIN
+        value: 100
+      - key: JSON_BODY_LIMIT
+        value: 12mb
+      - key: PHOTO_MAX_BYTES
+        value: 8388608
+      - key: POWER_BULK_LIMIT
+        value: 500
+
+databases:
+  - name: smart-home-db
+    plan: free
+    region: singapore
+    databaseName: smart_home
+    user: smart_home
