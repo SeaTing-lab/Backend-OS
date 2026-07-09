@@ -72,6 +72,7 @@ router.post('/readings', async (req, res, next) => {
           power: reading.power,
           powerLoss: reading.powerLoss,
           energyKwh: reading.energyKwh,
+          source: reading.source,
           rawPayload: reading.rawPayload,
           timestamp: reading.timestamp,
         },
@@ -263,6 +264,7 @@ function normalizeReading(raw) {
   const energyKwh = numberValue(raw.energy_kwh ?? raw.energyKwh ?? raw.kwh ?? raw.energy, 0);
   const timestamp = dateValue(raw.timestamp) || datePartsValue(raw) || new Date();
   const deviceId = safeText(raw.device_id || raw.deviceId, defaultDeviceId) || defaultDeviceId;
+  const source = safeText(raw.source || raw.meter_source || raw.meterSource, 'unknown') || 'unknown';
   const identityKey =
     safeText(raw.identity_key || raw.identityKey, '') ||
     identityKeyFor({ deviceId, timestamp, voltage, current, power, powerLoss });
@@ -277,6 +279,7 @@ function normalizeReading(raw) {
     power,
     powerLoss,
     energyKwh,
+    source,
     rawPayload: JSON.stringify(raw),
     timestamp,
   };
@@ -295,6 +298,7 @@ function readingResponse(reading) {
     power: reading.power,
     power_loss: reading.powerLoss,
     energy_kwh: reading.energyKwh,
+    source: reading.source,
     day: timestamp.getDate(),
     month: timestamp.getMonth() + 1,
     year: timestamp.getFullYear(),

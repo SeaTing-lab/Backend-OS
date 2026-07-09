@@ -49,6 +49,7 @@ model PowerReading {
   power           Float
   powerLoss       Float
   energyKwh       Float    @default(0)
+  source          String   @default("unknown")
   rawPayload      String?
   timestamp       DateTime
   createdAt       DateTime @default(now())
