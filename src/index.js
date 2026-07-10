@@ -20,6 +20,7 @@ const alertRoutes   = require('./routes/alerts');
 const systemRoutes  = require('./routes/system');
 const photoRoutes   = require('./routes/photos');
 const powerRoutes   = require('./routes/power');
+const securityTimelineRoutes = require('./routes/securityTimeline');
 
 // ── Express app ───────────────────────────────────────────────────────────
 const app = express();
@@ -42,6 +43,7 @@ app.use('/api/alerts',  alertRoutes);
 app.use('/api/system',  systemRoutes);
 app.use('/api/photos',  photoRoutes);
 app.use('/api/power',   powerRoutes);
+app.use('/api/security-timeline', securityTimelineRoutes);
 
 // Health check (no auth)
 app.get('/health', (req, res) => {
