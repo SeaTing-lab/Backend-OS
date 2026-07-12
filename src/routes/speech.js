@@ -97,4 +97,61 @@ router.post('/transcribe', upload.single('audio'), async (req, res) => {
   }
 });
 
+router.post('/speak', async (req, res) => {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: 'OPENAI_API_KEY is not set on the backend.' });
+  }
+
+  const text = String(req.body?.text || req.body?.input || '').trim();
+  if (!text) {
+    return res.status(400).json({ error: 'Missing text for speech.' });
+  }
+  if (text.length > 1200) {
+    return res.status(400).json({ error: 'Speech text is too long.' });
+  }
+
+  const model = process.env.OPENAI_TTS_MODEL || 'gpt-4o-mini-tts';
+  const voice = process.env.OPENAI_TTS_VOICE || 'coral';
+  const format = process.env.OPENAI_TTS_FORMAT || 'mp3';
+
+  try {
+    const response = await axios.post(
+      'https://api.openai.com/v1/audio/speech',
+      {
+        model,
+        voice,
+        input: text,
+        response_format: format,
+        instructions: 'Speak naturally and clearly in Khmer. Keep the tone helpful, calm, and concise.',
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        responseType: 'arraybuffer',
+        timeout: Number(process.env.SPEECH_TIMEOUT_MS || 35000),
+      },
+    );
+
+    return res.json({
+      audioBase64: Buffer.from(response.data).toString('base64'),
+      format,
+      model,
+      voice,
+    });
+  } catch (error) {
+    const status = error.response?.status;
+    const detail =
+      error.response?.data?.error?.message ||
+      error.response?.data?.message ||
+      error.message ||
+      'Speech generation failed';
+    return res.status(status && status < 500 ? status : 502).json({
+      error: 'Speech generation failed',
+      detail,
+    });
+  }
+});
 module.exports = router;
