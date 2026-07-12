@@ -21,6 +21,7 @@ const systemRoutes  = require('./routes/system');
 const photoRoutes   = require('./routes/photos');
 const powerRoutes   = require('./routes/power');
 const securityTimelineRoutes = require('./routes/securityTimeline');
+const speechRoutes = require('./routes/speech');
 
 // ── Express app ───────────────────────────────────────────────────────────
 const app = express();
@@ -44,6 +45,7 @@ app.use('/api/system',  systemRoutes);
 app.use('/api/photos',  photoRoutes);
 app.use('/api/power',   powerRoutes);
 app.use('/api/security-timeline', securityTimelineRoutes);
+app.use('/api/speech', speechRoutes);
 
 // Health check (no auth)
 app.get('/health', (req, res) => {
