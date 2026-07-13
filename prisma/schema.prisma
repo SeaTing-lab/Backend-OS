@@ -114,5 +114,21 @@ model Alert {
   @@index([userId])
 }
 
+model Photo {
+  id            String   @id
+  filename      String?
+  mimeType      String
+  size          Int
+  imageBase64   String
+  timestamp     DateTime
+  distanceCm    Float    @default(0)
+  thresholdCm   Float    @default(0)
+  source        String   @default("ultrasonic")
+  cameraSource  String   @default("phone")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
+  @@index([timestamp])
+  @@index([createdAt])
+}
 

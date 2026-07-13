@@ -1,15 +1,13 @@
 const crypto = require('crypto');
 const express = require('express');
-const fs = require('fs/promises');
-const path = require('path');
+const getPrismaClient = require('../config/database');
 
 const router = express.Router();
+const prisma = getPrismaClient();
 
-const uploadRoot = path.join(__dirname, '..', '..', 'uploads');
-const photoDir = path.join(uploadRoot, 'photos');
-const indexPath = path.join(photoDir, 'photos.json');
 const maxImageBytes =
   Number.parseInt(process.env.PHOTO_MAX_BYTES, 10) || 8 * 1024 * 1024;
+const maxPhotos = Number.parseInt(process.env.PHOTO_HISTORY_LIMIT, 10) || 1000;
 
 const mimeExt = {
   'image/jpeg': 'jpg',
@@ -19,10 +17,15 @@ const mimeExt = {
 
 router.get('/', async (req, res, next) => {
   try {
-    const photos = await readPhotos();
+    const limit = clampInt(req.query.limit, 1, maxPhotos, maxPhotos);
+    const photos = await prisma.photo.findMany({
+      orderBy: { timestamp: 'desc' },
+      take: limit,
+    });
     return res.json({
       photos: photos.map((photo) => publicPhoto(req, photo)),
       count: photos.length,
+      storage: 'database',
     });
   } catch (error) {
     return next(error);
@@ -31,10 +34,28 @@ router.get('/', async (req, res, next) => {
 
 router.get('/:id', async (req, res, next) => {
   try {
-    const photos = await readPhotos();
-    const photo = photos.find((item) => item.id === req.params.id);
+    const photo = await prisma.photo.findUnique({
+      where: { id: req.params.id },
+    });
     if (!photo) return res.status(404).json({ error: 'Photo not found' });
     return res.json(publicPhoto(req, photo));
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.get('/:id/file', async (req, res, next) => {
+  try {
+    const photo = await prisma.photo.findUnique({
+      where: { id: req.params.id },
+    });
+    if (!photo) return res.status(404).json({ error: 'Photo not found' });
+
+    const buffer = Buffer.from(photo.imageBase64, 'base64');
+    res.setHeader('Content-Type', photo.mimeType);
+    res.setHeader('Content-Length', buffer.length);
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    return res.end(buffer);
   } catch (error) {
     return next(error);
   }
@@ -50,7 +71,8 @@ router.post('/upload', async (req, res, next) => {
         .json({ error: 'imageBase64 and mimeType are required' });
     }
 
-    const imageBuffer = decodeBase64Image(imageBase64);
+    const payload = normalizeBase64(imageBase64);
+    const imageBuffer = Buffer.from(payload, 'base64');
     if (imageBuffer.length === 0) {
       return res.status(400).json({ error: 'Image is empty' });
     }
@@ -58,31 +80,37 @@ router.post('/upload', async (req, res, next) => {
       return res.status(413).json({ error: 'Image is too large' });
     }
 
-    await ensurePhotoStore();
-
     const now = new Date();
-    const id = `${now.getTime()}_${crypto.randomBytes(5).toString('hex')}`;
+    const id = safeId(req.body.id) || `${now.getTime()}_${crypto.randomBytes(5).toString('hex')}`;
     const filename = `${id}.${mimeExt[mimeType]}`;
-    const filePath = path.join(photoDir, filename);
-    await fs.writeFile(filePath, imageBuffer);
-
-    const photo = {
+    const data = {
       id,
       filename,
-      path: `/uploads/photos/${filename}`,
       mimeType,
       size: imageBuffer.length,
-      timestamp: dateValue(req.body.timestamp) || now.toISOString(),
+      imageBase64: payload,
+      timestamp: dateValue(req.body.timestamp) || now,
       distanceCm: numberValue(req.body.distanceCm ?? req.body.distance_cm),
       thresholdCm: numberValue(req.body.thresholdCm ?? req.body.threshold_cm),
       source: safeText(req.body.source, 'ultrasonic'),
       cameraSource: safeText(req.body.cameraSource || req.body.camera_source, 'phone'),
-      createdAt: now.toISOString(),
     };
 
-    const photos = await readPhotos();
-    photos.unshift(photo);
-    await writePhotos(photos);
+    const photo = await prisma.photo.upsert({
+      where: { id },
+      create: data,
+      update: {
+        filename: data.filename,
+        mimeType: data.mimeType,
+        size: data.size,
+        imageBase64: data.imageBase64,
+        timestamp: data.timestamp,
+        distanceCm: data.distanceCm,
+        thresholdCm: data.thresholdCm,
+        source: data.source,
+        cameraSource: data.cameraSource,
+      },
+    });
 
     return res.status(201).json({ photo: publicPhoto(req, photo) });
   } catch (error) {
@@ -92,52 +120,32 @@ router.post('/upload', async (req, res, next) => {
 
 router.delete('/:id', async (req, res, next) => {
   try {
-    const photos = await readPhotos();
-    const index = photos.findIndex((item) => item.id === req.params.id);
-    if (index === -1) return res.status(404).json({ error: 'Photo not found' });
-
-    const [photo] = photos.splice(index, 1);
-    await writePhotos(photos);
-
-    try {
-      await fs.unlink(path.join(photoDir, photo.filename));
-    } catch (error) {
-      if (error.code !== 'ENOENT') throw error;
+    const result = await prisma.photo.deleteMany({
+      where: { id: req.params.id },
+    });
+    if (result.count === 0) {
+      return res.status(404).json({ error: 'Photo not found' });
     }
-
-    return res.json({ deleted: true, id: photo.id });
+    return res.json({ deleted: true, id: req.params.id });
   } catch (error) {
     return next(error);
   }
 });
 
-async function ensurePhotoStore() {
-  await fs.mkdir(photoDir, { recursive: true });
-  try {
-    await fs.access(indexPath);
-  } catch {
-    await fs.writeFile(indexPath, '[]');
-  }
-}
-
-async function readPhotos() {
-  await ensurePhotoStore();
-  const raw = await fs.readFile(indexPath, 'utf8');
-  const photos = JSON.parse(raw || '[]');
-  return Array.isArray(photos)
-    ? photos.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-    : [];
-}
-
-async function writePhotos(photos) {
-  await ensurePhotoStore();
-  await fs.writeFile(indexPath, JSON.stringify(photos, null, 2));
-}
-
 function publicPhoto(req, photo) {
   return {
-    ...photo,
-    url: absoluteUrl(req, photo.path),
+    id: photo.id,
+    filename: photo.filename,
+    mimeType: photo.mimeType,
+    size: photo.size,
+    timestamp: photo.timestamp.toISOString(),
+    distanceCm: photo.distanceCm,
+    thresholdCm: photo.thresholdCm,
+    source: photo.source,
+    cameraSource: photo.cameraSource,
+    createdAt: photo.createdAt.toISOString(),
+    updatedAt: photo.updatedAt.toISOString(),
+    url: absoluteUrl(req, `/api/photos/${encodeURIComponent(photo.id)}/file`),
   };
 }
 
@@ -152,10 +160,14 @@ function normalizeMime(value) {
   return mimeExt[mimeType] ? mimeType : null;
 }
 
-function decodeBase64Image(value) {
+function normalizeBase64(value) {
   const text = String(value);
-  const payload = text.includes(',') ? text.split(',').pop() : text;
-  return Buffer.from(payload, 'base64');
+  return text.includes(',') ? text.split(',').pop() : text;
+}
+
+function safeId(value) {
+  const id = String(value || '').trim();
+  return /^[a-zA-Z0-9_-]{3,120}$/.test(id) ? id : '';
 }
 
 function safeText(value, fallback) {
@@ -170,7 +182,13 @@ function numberValue(value) {
 
 function dateValue(value) {
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function clampInt(value, min, max, fallback) {
+  const number = Number.parseInt(value, 10);
+  if (!Number.isFinite(number)) return fallback;
+  return Math.max(min, Math.min(max, number));
 }
 
 module.exports = router;
