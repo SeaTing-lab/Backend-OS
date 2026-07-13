@@ -6,7 +6,40 @@ const auth = require('../middleware/auth');
 const router = express.Router();
 const prisma = getPrismaClient();
 
-// GET /api/sensors/latest  — most recent reading
+// POST /api/sensors/readings  - app background upload queue fallback
+router.post('/readings', async (req, res, next) => {
+  try {
+    const rawReadings = Array.isArray(req.body)
+      ? req.body
+      : Array.isArray(req.body?.readings)
+        ? req.body.readings
+        : [req.body];
+
+    const saved = [];
+    for (const raw of rawReadings.slice(0, 500)) {
+      const reading = normalizeQueuedSensor(raw || {});
+      const existing = await prisma.sensorReading.findFirst({
+        where: {
+          createdAt: reading.createdAt,
+          temperature: reading.temperature,
+          humidity: reading.humidity,
+          gasLevel: reading.gasLevel,
+          isRaining: reading.isRaining,
+          distance: reading.distance,
+          doorOpen: reading.doorOpen,
+        },
+      });
+      const stored = existing || await prisma.sensorReading.create({ data: reading });
+      saved.push(stored);
+    }
+
+    return res.status(201).json({ saved: saved.length, readings: saved });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+// GET /api/sensors/latest  â€” most recent reading
 router.get('/latest', auth, async (req, res) => {
   const reading = await prisma.sensorReading.findFirst({
     orderBy: { createdAt: 'desc' },
@@ -44,7 +77,7 @@ router.get('/history', auth, async (req, res) => {
   return res.json({ readings: readings.reverse(), count: readings.length });
 });
 
-// GET /api/sensors/stats?hours=24  — min/max/avg per sensor
+// GET /api/sensors/stats?hours=24  â€” min/max/avg per sensor
 router.get('/stats', auth, async (req, res) => {
   const hours = parseInt(req.query.hours) || 24;
   const since = new Date(Date.now() - hours * 3600 * 1000);
@@ -75,7 +108,7 @@ router.get('/stats', auth, async (req, res) => {
   });
 });
 
-// DELETE /api/sensors/old?days=30  — cleanup old readings
+// DELETE /api/sensors/old?days=30  â€” cleanup old readings
 router.delete('/old', auth, async (req, res) => {
   const days = parseInt(req.query.days) || 30;
   const before = new Date(Date.now() - days * 86400 * 1000);
@@ -84,5 +117,53 @@ router.delete('/old', auth, async (req, res) => {
   });
   return res.json({ deleted: count });
 });
+
+
+function normalizeQueuedSensor(raw) {
+  const temperature = clampNumber(raw.temperature, -50, 100, 0);
+  const humidity = clampNumber(raw.humidity, 0, 100, 0);
+  const gasLevel = Math.max(0, Math.min(10000, intValue(raw.gas_level ?? raw.gasLevel ?? raw.gas, 0)));
+  const isRaining = boolValue(raw.rain ?? raw.isRaining);
+  const doorOpen = boolValue(raw.door_open ?? raw.doorOpen ?? raw.door);
+  const distance = clampNumber(raw.ultrasonic ?? raw.distance, 0, 1000, 0);
+  const createdAt = dateValue(raw.timestamp ?? raw.createdAt ?? raw.created_at) || new Date();
+  return {
+    temperature,
+    humidity,
+    gasLevel,
+    isRaining,
+    distance,
+    doorOpen,
+    rawPayload: JSON.stringify(raw),
+    createdAt,
+  };
+}
+
+function clampNumber(value, min, max, fallback) {
+  const number = Number.parseFloat(value);
+  if (!Number.isFinite(number)) return fallback;
+  return Math.max(min, Math.min(max, number));
+}
+
+function intValue(value, fallback) {
+  const number = Number.parseInt(value, 10);
+  return Number.isFinite(number) ? number : fallback;
+}
+
+function boolValue(value) {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'number') return value !== 0;
+  if (typeof value === 'string') {
+    const normalized = value.toLowerCase();
+    return normalized === 'true' || normalized === '1' || normalized === 'yes' || normalized === 'on';
+  }
+  return false;
+}
+
+function dateValue(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
 
 module.exports = router;
